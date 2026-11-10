@@ -1,0 +1,24 @@
+{
+  "name": "examslot-timetabler",
+  "version": "1.0.0",
+  "description": "ExamSlot – Automated Examination Timetabling via Graph Coloring Algorithms",
+  "main": "index.html",
+  "scripts": {
+    "start": "powershell -ExecutionPolicy Bypass -File serve.ps1",
+    "serve": "npx serve .",
+    "test": "powershell -ExecutionPolicy Bypass -File tests/run-verification.ps1"
+  },
+  "keywords": [
+    "graph-coloring",
+    "welsh-powell",
+    "examination-timetabling",
+    "backtracking",
+    "chromatic-number",
+    "discrete-mathematics",
+    "react",
+    "chartjs"
+  ],
+  "author": "Experiential Learning Project Team",
+  "license": "MIT"
+}
+

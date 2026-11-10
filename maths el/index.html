@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ExamSlot – Graph Coloring for Automated Examination Timetabling</title>
+  <meta name="description" content="Automated conflict-free university examination timetabling system using Graph Coloring algorithms (Welsh-Powell, Greedy, Backtracking exact solver).">
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              800: '#1e40af',
+              900: '#1e3a8a',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- Core Stylesheet -->
+  <link rel="stylesheet" href="./css/styles.css">
+
+  <!-- React 18 & ReactDOM 18 -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+
+  <!-- Chart.js 4 -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js" crossorigin></script>
+
+  <!-- jsPDF & AutoTable for PDF Generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" crossorigin></script>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased font-sans">
+  <!-- React App Root Container -->
+  <div id="root">
+    <!-- Initial Loading State Skeleton -->
+    <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #f8fafc; font-family: sans-serif;">
+      <div style="text-align: center; max-width: 400px; padding: 24px;">
+        <div style="width: 56px; height: 56px; border-radius: 12px; background: #1e40af; color: white; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: bold; margin: 0 auto 16px; box-shadow: 0 4px 6px -1px rgba(30, 64, 175, 0.3);">
+          Ω
+        </div>
+        <h2 style="font-size: 20px; font-weight: 800; color: #1e293b; margin-bottom: 6px;">ExamSlot</h2>
+        <p style="font-size: 13px; color: #64748b; margin-bottom: 20px;">Initializing Graph Theory Timetabling Engine...</p>
+        <div style="display: inline-block; width: 28px; height: 28px; border: 3px solid #e2e8f0; border-top-color: #2563eb; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+
+  <!-- ExamSlot Core Application Bundle (Zero-config, Zero-CORS) -->
+  <script src="./js/bundle.js"></script>
+</body>
+</html>
+

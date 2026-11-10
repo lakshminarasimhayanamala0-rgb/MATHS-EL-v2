@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ExamSlot - Automated Test Suite & Mathematical Verification</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 40px; background: #f8fafc; color: #1e293b; }
+    .container { max-width: 900px; margin: 0 auto; background: white; padding: 32px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+    h1 { font-size: 24px; font-weight: 800; color: #1e40af; margin-bottom: 8px; }
+    p { color: #64748b; font-size: 14px; margin-bottom: 24px; }
+    .test-case { border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 12px; transition: all 0.2s; }
+    .test-case.pass { border-left: 5px solid #10b981; background: #f0fdf4; }
+    .test-case.fail { border-left: 5px solid #ef4444; background: #fef2f2; }
+    .test-title { font-weight: 700; font-size: 15px; display: flex; justify-content: space-between; align-items: center; }
+    .badge { padding: 4px 10px; border-radius: 9999px; font-size: 12px; font-weight: 700; }
+    .badge-pass { background: #dcfce7; color: #15803d; }
+    .badge-fail { background: #fee2e2; color: #b91c1c; }
+    .test-details { font-size: 13px; color: #475569; margin-top: 6px; font-family: monospace; white-space: pre-wrap; }
+    .summary-box { background: #1e40af; color: white; padding: 16px 20px; border-radius: 8px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>ExamSlot Test Suite & Algorithmic Verification</h1>
+    <p>Automated verification across sparse, dense, disconnected, and edge-case graphs to validate chromatic numbers and conflict elimination.</p>
+
+    <div class="summary-box">
+      <div>
+        <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.9;">Total Test Cases</div>
+        <div id="summary-total" style="font-size: 24px; font-weight: 800;">Running tests...</div>
+      </div>
+      <div id="summary-status" style="font-size: 16px; font-weight: 700;"></div>
+    </div>
+
+    <div id="results-container"></div>
+  </div>
+
+  <script src="../js/bundle.js"></script>
+  <script>
+    // Execute Automated Test Suite
+    window.addEventListener('load', () => {
+      const container = document.getElementById('results-container');
+      const tests = [];
+
+      function assert(condition, message) {
+        if (!condition) throw new Error(message || 'Assertion failed');
+      }
+
+      function recordTest(name, fn) {
+        try {
+          const detail = fn();
+          tests.push({ name, passed: true, detail: detail || 'Assertion passed successfully.' });
+        } catch (err) {
+          tests.push({ name, passed: false, detail: err.message });
+        }
+      }
+
+      // TEST 1: Small Dataset (3 subjects, 3 students)
+      recordTest('Test 1: Small Dataset Conflict & Coloring', () => {
+        const subs = [
+          { code: 'A', name: 'Course A' },
+          { code: 'B', name: 'Course B' },
+          { code: 'C', name: 'Course C' }
+        ];
+        const studs = [
+          { id: 'S1', subjects: ['A', 'B'] },
+          { id: 'S2', subjects: ['B', 'C'] }
+        ];
+        // Conflict graph: A-B, B-C. (No edge A-C). Chromatic number should be 2!
+        const g = ExamSlotInternal.buildConflictGraph(subs, studs);
+        assert(g.totalEdges === 2, `Expected 2 edges, got ${g.totalEdges}`);
+        assert(g.degrees['B'] === 2, `Expected degree of B to be 2, got ${g.degrees['B']}`);
+
+        const bt = ExamSlotInternal.runBacktrackingColoring(g);
+        assert(bt.totalColors === 2, `Expected chromatic number 2, got ${bt.totalColors}`);
+        const v = ExamSlotInternal.validateColoring(g, bt.coloring);
+        assert(v.isValid, 'Coloring produced conflicts');
+        return `Graph has 2 edges (A-B, B-C). Chromatic number χ = ${bt.totalColors} (A & C share Color ${bt.coloring['A']}). Zero conflicts.`;
+      });
+
+      // TEST 2: Dense Complete Graph K_5
+      recordTest('Test 2: Dense Complete Graph (K_5)', () => {
+        const subs = [
+          { code: 'K1', name: 'K1' }, { code: 'K2', name: 'K2' },
+          { code: 'K3', name: 'K3' }, { code: 'K4', name: 'K4' }, { code: 'K5', name: 'K5' }
+        ];
+        // 1 student enrolled in all 5 courses -> Every pair conflicts! Complete graph K5.
+        const studs = [{ id: 'S_ALL', subjects: ['K1', 'K2', 'K3', 'K4', 'K5'] }];
+        const g = ExamSlotInternal.buildConflictGraph(subs, studs);
+        assert(g.totalEdges === 10, `Expected 10 edges in K5, got ${g.totalEdges}`);
+
+        const bt = ExamSlotInternal.runBacktrackingColoring(g);
+        assert(bt.totalColors === 5, `Complete graph K5 must have χ(K5) = 5, got ${bt.totalColors}`);
+        const v = ExamSlotInternal.validateColoring(g, bt.coloring);
+        assert(v.isValid, 'K5 coloring validation failed');
+        return `Complete graph K_5 verified with 10 conflict edges. Chromatic number χ(K_5) = 5. Every subject receives a unique slot.`;
+      });
+
+      // TEST 3: Disconnected / Isolated Vertices
+      recordTest('Test 3: Sparse Disconnected Graph (Isolated Vertices)', () => {
+        const subs = [
+          { code: 'ISO1', name: 'Independent 1' },
+          { code: 'ISO2', name: 'Independent 2' },
+          { code: 'ISO3', name: 'Independent 3' }
+        ];
+        // 3 students, each enrolled in only 1 subject -> 0 edges!
+        const studs = [
+          { id: 'S1', subjects: ['ISO1'] },
+          { id: 'S2', subjects: ['ISO2'] },
+          { id: 'S3', subjects: ['ISO3'] }
+        ];
+        const g = ExamSlotInternal.buildConflictGraph(subs, studs);
+        assert(g.totalEdges === 0, `Expected 0 edges, got ${g.totalEdges}`);
+        const bt = ExamSlotInternal.runBacktrackingColoring(g);
+        assert(bt.totalColors === 1, `Expected 1 slot for graph with 0 edges, got ${bt.totalColors}`);
+        return `Graph with 0 conflict edges successfully colored in 1 single time slot. All 3 courses scheduled in parallel.`;
+      });
+
+      // TEST 4: Bipartite Graph (Even Cycle C_4)
+      recordTest('Test 4: Bipartite Graph (Cycle C_4)', () => {
+        const subs = [
+          { code: 'C1', name: 'C1' }, { code: 'C2', name: 'C2' },
+          { code: 'C3', name: 'C3' }, { code: 'C4', name: 'C4' }
+        ];
+        // Cycle: C1-C2, C2-C3, C3-C4, C4-C1.
+        const studs = [
+          { id: 'S1', subjects: ['C1', 'C2'] },
+          { id: 'S2', subjects: ['C2', 'C3'] },
+          { id: 'S3', subjects: ['C3', 'C4'] },
+          { id: 'S4', subjects: ['C4', 'C1'] }
+        ];
+        const g = ExamSlotInternal.buildConflictGraph(subs, studs);
+        assert(g.totalEdges === 4, `Expected 4 edges, got ${g.totalEdges}`);
+        const bt = ExamSlotInternal.runBacktrackingColoring(g);
+        assert(bt.totalColors === 2, `Even cycle must have χ = 2, got ${bt.totalColors}`);
+        return `Even cycle C_4 verified. Chromatic number χ(C_4) = 2. Alternating vertices assigned identical slots.`;
+      });
+
+      // TEST 5: Sample 7 Subjects & 20 Students Dataset Invariant
+      recordTest('Test 5: Sample Dataset (7 Subjects, 20 Students) Validation', () => {
+        const subs = ExamSlotInternal.INITIAL_SUBJECTS;
+        const studs = ExamSlotInternal.INITIAL_STUDENTS;
+        const g = ExamSlotInternal.buildConflictGraph(subs, studs);
+        assert(g.totalVertices === 7, `Expected 7 vertices, got ${g.totalVertices}`);
+        assert(g.totalEdges > 0, 'Edges must be calculated from student registrations');
+
+        const wp = ExamSlotInternal.runWelshPowell(g);
+        const gr = ExamSlotInternal.runGreedyColoring(g);
+        const bt = ExamSlotInternal.runBacktrackingColoring(g);
+
+        assert(ExamSlotInternal.validateColoring(g, wp.coloring).isValid, 'Welsh-Powell produced conflict');
+        assert(ExamSlotInternal.validateColoring(g, gr.coloring).isValid, 'Greedy produced conflict');
+        assert(ExamSlotInternal.validateColoring(g, bt.coloring).isValid, 'Backtracking produced conflict');
+
+        assert(bt.totalColors <= wp.totalColors, 'Exact solver must be <= Welsh-Powell heuristic');
+        return `Sample Dataset verified:
+• Vertices: ${g.totalVertices}, Edges: ${g.totalEdges}
+• Welsh-Powell Slots: ${wp.totalColors} (${wp.executionTimeMs} ms)
+• Greedy Slots: ${gr.totalColors} (${gr.executionTimeMs} ms)
+• Backtracking Optimal χ: ${bt.totalColors} (${bt.executionTimeMs} ms)
+• All generated timetables 100% Conflict-Free.`;
+      });
+
+      // TEST 6: CSV Parsing & Duplicate ID Detection
+      recordTest('Test 6: CSV Parser & Duplicate Detection', () => {
+        const csvRaw = [
+          'Student ID,Full Name,Department,Semester,Academic Year,Registered Subjects',
+          'STU999,Alice,CS,Sem 4,2026-2027,"MATH, PY"',
+          'STU999,Bob Duplicate,CS,Sem 4,2026-2027,"DBMS, OS"',
+          'STU1000,Charlie,IT,Sem 4,2026-2027,"UNKNOWN_SUB, MATH"'
+        ].join('\r\n');
+
+        const rows = ExamSlotInternal.parseCSV(csvRaw);
+        const res = ExamSlotInternal.validateImportedData(rows, ExamSlotInternal.INITIAL_SUBJECTS);
+
+        assert(res.duplicateCount === 1, `Expected 1 duplicate, got ${res.duplicateCount}`);
+        assert(res.invalidSubjectCount === 1, `Expected 1 unknown subject, got ${res.invalidSubjectCount}`);
+        assert(res.validCount === 2, `Expected 2 valid records, got ${res.validCount}`);
+        return `CSV Parser successfully detected duplicate ID 'STU999' and flagged unknown subject 'UNKNOWN_SUB'.`;
+      });
+
+      // TEST 7: Empty Dataset Graceful Handling
+      recordTest('Test 7: Empty Dataset Safety', () => {
+        const g = ExamSlotInternal.buildConflictGraph([], []);
+        assert(g.totalVertices === 0, 'Vertices must be 0');
+        assert(g.totalEdges === 0, 'Edges must be 0');
+        const bt = ExamSlotInternal.runBacktrackingColoring(g);
+        assert(bt.totalColors === 0, 'Total colors must be 0 for empty graph');
+        return `Empty graph handled cleanly without runtime exceptions.`;
+      });
+
+      // Render Results
+      container.innerHTML = '';
+      let passedCount = 0;
+
+      tests.forEach((t) => {
+        if (t.passed) passedCount++;
+        const card = document.createElement('div');
+        card.className = `test-case ${t.passed ? 'pass' : 'fail'}`;
+        card.innerHTML = `
+          <div class="test-title">
+            <span>${t.name}</span>
+            <span class="badge ${t.passed ? 'badge-pass' : 'badge-fail'}">${t.passed ? 'PASSED' : 'FAILED'}</span>
+          </div>
+          <div class="test-details">${t.detail}</div>
+        `;
+        container.appendChild(card);
+      });
+
+      document.getElementById('summary-total').innerText = `${passedCount} / ${tests.length} Passed`;
+      document.getElementById('summary-status').innerHTML =
+        passedCount === tests.length
+          ? '<span style="background: #10b981; padding: 6px 14px; border-radius: 9999px;">✓ All Tests Passed</span>'
+          : '<span style="background: #ef4444; padding: 6px 14px; border-radius: 9999px;">⚠️ Failures Detected</span>';
+    });
+  </script>
+</body>
+</html>
+
